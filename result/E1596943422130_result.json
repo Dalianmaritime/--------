@@ -2,7 +2,7 @@
     "instance_file": "E1596943422130.txt",
     "total_cost": 899149.395388739,
     "total_routes": 3,
-    "duration_seconds": 17.91934609413147,
+    "duration_seconds": 16.028920650482178,
     "routes": [
         {
             "route_id": 1,
@@ -12,7 +12,7 @@
                 1,
                 6,
                 3,
-                0
+                9
             ],
             "load_rate_volume": 0.7506245384152129,
             "distance": 270358.0,
@@ -1145,7 +1145,7 @@
                 0,
                 7,
                 8,
-                0
+                9
             ],
             "load_rate_volume": 0.7417701352804609,
             "distance": 145106.0,
@@ -1379,7 +1379,7 @@
                 2,
                 4,
                 5,
-                0
+                9
             ],
             "load_rate_volume": 0.8202381401381097,
             "distance": 254563.0,

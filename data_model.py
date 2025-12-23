@@ -77,8 +77,9 @@ class Route:
 from config import Config
 
 class Solution:
-    def __init__(self, depot, routes=None):
-        self.depot = depot
+    def __init__(self, start_node, end_node, routes=None):
+        self.start_node = start_node
+        self.end_node = end_node
         self.routes = routes if routes is not None else []
     
     def __repr__(self):
@@ -101,4 +102,4 @@ class Solution:
         import copy
         # 浅拷贝即可，因为 Route 对象通常会被替换而不是修改
         # 但为了安全，对 routes 列表进行拷贝
-        return Solution(self.depot, list(self.routes))
+        return Solution(self.start_node, self.end_node, list(self.routes))

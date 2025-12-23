@@ -184,11 +184,11 @@ class ALNSOperators:
                 continue
                 
             # 路径受影响，需要重建
-            new_seq = [solution.depot]
+            new_seq = [solution.start_node]
             for node in r.sequence[1:-1]:
                 if node.id not in removed_ids:
                     new_seq.append(node)
-            new_seq.append(solution.depot)
+            new_seq.append(solution.end_node)
             
             if len(new_seq) > 2:
                 # 重新评估该路径 (车型可能会变小)
@@ -231,7 +231,7 @@ class ALNSOperators:
                 
                 # 补充：开启新车的 Cost
                 # 必须真实计算新车的加权成本
-                new_route = self.fleet_mgr.find_best_vehicle([solution.depot, node, solution.depot])
+                new_route = self.fleet_mgr.find_best_vehicle([solution.start_node, node, solution.end_node])
                 if new_route:
                     new_cost = self._calculate_weighted_cost(new_route)
                     # 增量即为新车的总成本
@@ -259,7 +259,7 @@ class ALNSOperators:
                 r_idx, pos = best_insert_move
                 if r_idx == -1:
                     # 新建路径
-                    new_route = self.fleet_mgr.find_best_vehicle([solution.depot, best_regret_node, solution.depot])
+                    new_route = self.fleet_mgr.find_best_vehicle([solution.start_node, best_regret_node, solution.end_node])
                     solution.routes.append(new_route)
                 else:
                     # 插入现有路径
@@ -288,10 +288,13 @@ class ALNSOperators:
 
             # 约束检查：Bonded Warehouse
             if node.is_bonded:
-                possible_indices = [1] # 必须在 Depot(0) 之后
+                possible_indices = [1] # 必须在 Start(0) 之后
             else:
                 # 如果现有路径已有 Bonded，只能插在它后面
                 start = 2 if (len(route.sequence) > 1 and route.sequence[1].is_bonded) else 1
+                # 必须在 End Node 之前，End Node 索引是 len-1，所以 range 止于 len
+                # insert(i, node) 意味着在 i 处插入，原 i 后移。
+                # 最后一个有效插入位置是 len-1 (即在 End Node 之前)
                 possible_indices = range(start, len(route.sequence))
                 
             current_weighted_cost = self._calculate_weighted_cost(route)
@@ -308,7 +311,7 @@ class ALNSOperators:
                         best_pos = (r_idx, i, new_route)
         
         # 2. 尝试开启新车
-        new_route_single = self.fleet_mgr.find_best_vehicle([solution.depot, node, solution.depot])
+        new_route_single = self.fleet_mgr.find_best_vehicle([solution.start_node, node, solution.end_node])
         if new_route_single:
             # 新车的增量就是其加权成本
             new_cost = self._calculate_weighted_cost(new_route_single)

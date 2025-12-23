@@ -16,7 +16,8 @@ def solve_single_instance(file_path: str, result_dir: str):
     
     # Load Data
     nodes, v_types, dist_mtx = load_problem(file_path)
-    print(f"Loaded {len(nodes)-1} customers and {len(v_types)} vehicle types.")
+    # nodes: [Start, Customer1, ..., CustomerN, End]
+    print(f"Loaded {len(nodes)-2} customers and {len(v_types)} vehicle types.")
     
     # Initialize Components
     fleet_mgr = FleetManager(v_types, dist_mtx)
@@ -24,10 +25,12 @@ def solve_single_instance(file_path: str, result_dir: str):
     
     # Initial Solution
     start_time = time.time()
-    depot = nodes[0]
-    customers = nodes[1:]
     
-    initial_sol = Solution(depot)
+    start_node = nodes[0]
+    end_node = nodes[-1]
+    customers = nodes[1:-1]
+    
+    initial_sol = Solution(start_node, end_node)
     initial_sol = ops.greedy_insertion(initial_sol, customers)
     print(f"Initial Solution: {len(initial_sol.routes)} routes, Cost: {initial_sol.total_cost:.2f}")
     

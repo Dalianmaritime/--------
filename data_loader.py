@@ -38,40 +38,44 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
     
     # Create Node objects
     # Map platformCode to Node Index
-    # Index 0 is reserved for Start/End point
-    node_map: Dict[str, int] = {'start_point': 0, 'end_point': 0} 
+    # Index 0 is Start Point
     nodes: List[Node] = []
     
-    # Create Depot Node (ID=0)
-    depot = Node(id=0, is_bonded=False, x=0, y=0) # Coordinates are dummy, we use dist matrix
-    nodes.append(depot)
+    # 1. Create Start Node (ID=0)
+    start_node = Node(id=0, is_bonded=False, x=0, y=0)
+    nodes.append(start_node)
     
-    # Create Customer Nodes
-    # Use platformDtoList to define nodes and their bonded status
+    # 2. Create Customer Nodes
     platforms = data['algorithmBaseParamDto']['platformDtoList']
+    node_map: Dict[str, int] = {'start_point': 0}
     
-    for idx, p_dto in enumerate(platforms, start=1):
+    current_idx = 1
+    for p_dto in platforms:
         p_code = p_dto['platformCode']
         is_bonded = p_dto.get('mustFirst', False)
         
-        node = Node(id=idx, is_bonded=is_bonded, x=0, y=0)
+        node = Node(id=current_idx, is_bonded=is_bonded, x=0, y=0)
         
         # Attach items
         if p_code in items_by_platform:
             node.items = items_by_platform[p_code]
         
         nodes.append(node)
-        node_map[p_code] = idx
+        node_map[p_code] = current_idx
+        current_idx += 1
         
-    # 3. Construct Distance Matrix
+    # 3. Create End Node (ID=N+1)
+    end_node_idx = current_idx
+    end_node = Node(id=end_node_idx, is_bonded=False, x=0, y=0)
+    nodes.append(end_node)
+    node_map['end_point'] = end_node_idx
+        
+    # 4. Construct Distance Matrix
     n_nodes = len(nodes)
-    dist_matrix = np.zeros((n_nodes, n_nodes))
-    dist_map = data['algorithmBaseParamDto']['distanceMap']
+    dist_matrix = np.full((n_nodes, n_nodes), float('inf')) # Initialize with inf
+    np.fill_diagonal(dist_matrix, 0) # Self distance is 0
     
-    # The keys in dist_map are like "platform10+platform29"
-    # We need to fill the matrix
-    # Row 0: start_point + X
-    # Col 0: X + end_point
+    dist_map = data['algorithmBaseParamDto']['distanceMap']
     
     # Helper to find index
     def get_idx(code):
@@ -86,18 +90,7 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
         u_idx = get_idx(u_code)
         v_idx = get_idx(v_code)
         
-        # Handle start_point (source) and end_point (sink)
-        # start_point maps to 0 (as source)
-        # end_point maps to 0 (as sink)
-        
-        if u_code == 'start_point':
-            if v_idx != -1:
-                dist_matrix[0][v_idx] = dist
-        elif v_code == 'end_point':
-            if u_idx != -1:
-                dist_matrix[u_idx][0] = dist
-        else:
-            if u_idx != -1 and v_idx != -1:
-                dist_matrix[u_idx][v_idx] = dist
-                
+        if u_idx != -1 and v_idx != -1:
+            dist_matrix[u_idx][v_idx] = dist
+            
     return nodes, vehicle_types, dist_matrix
