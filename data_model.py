@@ -74,19 +74,28 @@ class Route:
             self._hash = hashlib.md5(raw.encode()).hexdigest()
         return self._hash
 
+from config import Config
+
 class Solution:
     def __init__(self, depot, routes=None):
         self.depot = depot
         self.routes = routes if routes is not None else []
     
     def __repr__(self):
-        return f"Solution(Routes={len(self.routes)}, Cost={self.total_cost():.2f})"
+        return f"Solution(Routes={len(self.routes)}, Cost={self.total_cost:.2f})"
     
     @property
     def total_cost(self):
-        # 这是一个占位符，实际由 Solver._objective 计算
-        # 但为了方便调试，返回总距离
-        return sum(r.dist_cost for r in self.routes)
+        """
+        计算总加权成本：Alpha * (1 - AvgLoadRate) + Beta * TotalDistance
+        """
+        if not self.routes:
+            return 0.0
+        
+        total_dist = sum(r.dist_cost for r in self.routes)
+        avg_load_rate = sum(r.load_rate for r in self.routes) / len(self.routes)
+        
+        return Config.ALPHA * (1 - avg_load_rate) + Config.BETA * total_dist
     
     def copy(self):
         import copy

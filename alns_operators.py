@@ -2,6 +2,7 @@ import random
 import math
 from copy import deepcopy
 from data_model import Route, Solution
+from config import Config
 
 class ALNSOperators:
     def __init__(self, fleet_manager):
@@ -17,6 +18,10 @@ class ALNSOperators:
             self.greedy_insertion,
             self.regret_2_insertion
         ]
+
+    def _calculate_weighted_cost(self, route):
+        """Helper to calculate weighted cost for a route"""
+        return Config.ALPHA * (1 - route.load_rate) + Config.BETA * route.dist_cost
 
     # --- Destroy Operators ---
 
@@ -45,7 +50,7 @@ class ALNSOperators:
         return new_sol, removed_nodes
 
     def worst_removal(self, solution, n_remove=None):
-        """最差成本移除：移除那些导致路径成本增加最多的点"""
+        """最差成本移除：移除那些导致目标函数值增加最多的点"""
         new_sol = solution.copy()
         all_nodes = []
         node_costs = [] # (node, cost_saving)
@@ -55,27 +60,26 @@ class ALNSOperators:
             seq = r.sequence
             if len(seq) <= 2: continue
             
-            # 原始距离
-            # 注意：这里需要准确计算。为了性能，简化为距离差。
-            # Cost(Full) - Cost(Removed)
-            # 移除中间点 i: d(i-1, i) + d(i, i+1) - d(i-1, i+1)
-            # 对于首尾点（Depot后的第一个或Depot前的最后一个），逻辑类似
+            # 计算当前路径的加权成本
+            current_cost = self._calculate_weighted_cost(r)
             
             for i in range(1, len(seq)-1):
                 node = seq[i]
-                prev_node = seq[i-1]
-                next_node = seq[i+1]
+                # 构造移除该点后的临时序列
+                temp_seq = seq[:i] + seq[i+1:]
                 
-                # 计算距离 (需调用 fleet_mgr 的距离矩阵，或直接计算欧氏)
-                # 假设 fleet_mgr 有 helper
-                d_in = self.fleet_mgr.get_distance(prev_node, node)
-                d_out = self.fleet_mgr.get_distance(node, next_node)
-                d_skip = self.fleet_mgr.get_distance(prev_node, next_node)
+                # 重新评估该路径 (使用最小车型)
+                temp_route = self.fleet_mgr.find_best_vehicle(temp_seq)
                 
-                saving = d_in + d_out - d_skip
-                node_costs.append((node, saving))
+                if temp_route:
+                    new_cost = self._calculate_weighted_cost(temp_route)
+                    saving = current_cost - new_cost
+                    node_costs.append((node, saving))
+                else:
+                    # 如果移除点后反而不可行(理论上不应该)，则忽略
+                    pass
         
-        # 排序：saving 越大，说明该点绕路越远，越应该被移除
+        # 排序：saving 越大，说明该点导致成本增加越多，越应该被移除
         node_costs.sort(key=lambda x: x[1], reverse=True)
         
         if not node_costs:
@@ -86,7 +90,6 @@ class ALNSOperators:
         n_remove = min(n_remove, len(node_costs))
         
         # 引入随机性 (比如取前 2*N 中随机 N 个，或者概率选择)
-        # 这里使用确定性 + 少量随机扰动
         limit = min(len(node_costs), n_remove * 2)
         candidates = node_costs[:limit]
         selected = random.sample(candidates, n_remove)
@@ -99,7 +102,7 @@ class ALNSOperators:
         """
         Shaw Removal (Relatedness Removal)
         移除互相关联度高的点（距离近、需求量相似）
-        R(i, j) = φ1 * d_ij + φ2 * |vol_i - vol_j|
+        R(i, j) = φ1 * (d_ij / max_dist) + φ2 * (|vol_i - vol_j| / max_vol_diff)
         """
         new_sol = solution.copy()
         all_nodes = []
@@ -113,6 +116,22 @@ class ALNSOperators:
             n_remove = random.randint(1, max(1, len(all_nodes) // 2))
         n_remove = min(n_remove, len(all_nodes))
         
+        # 预计算最大距离和最大体积差用于归一化
+        max_dist = 1.0
+        max_vol_diff = 1.0
+        
+        # 简单采样估算最大值，避免 O(N^2)
+        sample_size = min(len(all_nodes), 50)
+        sample_nodes = random.sample(all_nodes, sample_size)
+        for i in range(len(sample_nodes)):
+            for j in range(i+1, len(sample_nodes)):
+                d = self.fleet_mgr.get_distance(sample_nodes[i], sample_nodes[j])
+                v_i = sum(it.l*it.w*it.h for it in sample_nodes[i].items)
+                v_j = sum(it.l*it.w*it.h for it in sample_nodes[j].items)
+                v_diff = abs(v_i - v_j)
+                max_dist = max(max_dist, d)
+                max_vol_diff = max(max_vol_diff, v_diff)
+        
         # 1. 随机选一个种子点
         seed_node = random.choice(all_nodes)
         removed_nodes = [seed_node]
@@ -125,24 +144,23 @@ class ALNSOperators:
             
             # 计算相关性 (数值越小越相关)
             candidates = []
+            ref_vol = sum(it.l*it.w*it.h for it in ref_node.items)
+            
             for target in remain_pool:
                 # 距离项
                 dist = self.fleet_mgr.get_distance(ref_node, target)
-                # 体积项 (归一化处理，假设最大体积 10m^3 = 10^10 mm^3)
-                # 简单用 log 体积差
-                vol_i = sum(it.l*it.w*it.h for it in ref_node.items)
-                vol_j = sum(it.l*it.w*it.h for it in target.items)
-                vol_diff = abs(vol_i - vol_j)
+                # 体积项
+                target_vol = sum(it.l*it.w*it.h for it in target.items)
+                vol_diff = abs(ref_vol - target_vol)
                 
-                # 简化权重：距离为主，体积为辅
-                score = dist + 0.00001 * vol_diff 
+                # 归一化计算相关性
+                score = (dist / max_dist) + (vol_diff / max_vol_diff)
                 candidates.append((target, score))
             
             # 排序选最小的
             candidates.sort(key=lambda x: x[1])
             
-            # 引入随机性 (Power parameter p=6 in Ropke & Pisinger)
-            # index = int(random.random()**p * len)
+            # 引入随机性
             idx = int(random.random()**3 * len(candidates))
             selected = candidates[idx][0]
             
@@ -158,6 +176,14 @@ class ALNSOperators:
         new_routes = []
         
         for r in solution.routes:
+            # 检查该路径是否有节点被移除
+            original_node_ids = set(n.id for n in r.sequence[1:-1])
+            if not original_node_ids.intersection(removed_ids):
+                # 路径未受影响，直接保留
+                new_routes.append(r)
+                continue
+                
+            # 路径受影响，需要重建
             new_seq = [solution.depot]
             for node in r.sequence[1:-1]:
                 if node.id not in removed_ids:
@@ -166,15 +192,11 @@ class ALNSOperators:
             
             if len(new_seq) > 2:
                 # 重新评估该路径 (车型可能会变小)
-                # 调用 fleet_mgr 寻找最佳车型 (Re-optimization)
                 new_route = self.fleet_mgr.find_best_vehicle(new_seq)
                 if new_route:
                     new_routes.append(new_route)
                 else:
-                    # 理论上减少点应该更可行，但如果之前是紧凑的，减少点可能导致装载率变低？
-                    # 不，这里只关心可行性。减少点一定可行 (除非有最小装载率限制，暂无)
-                    # 如果 find_best_vehicle 返回 None (极不可能)，保留原车型但重新计算
-                    # 这里假设总是成功的
+                    # 理论上不应该发生，除非移除点导致剩余点无法用任何车装载(极不可能)
                     pass
         
         solution.routes = new_routes
@@ -182,11 +204,7 @@ class ALNSOperators:
     # --- Repair Operators ---
 
     def greedy_insertion(self, solution, removed_nodes):
-        """贪婪插入：每次选择成本增量最小的插入位置"""
-        # 必须拷贝，不要修改原对象
-        # solution 已经在外部被 copy 过了 (在 solver 中)
-        # 但为了安全... ALNS solver 传入的是 temp_sol
-        
+        """贪婪插入：每次选择目标函数值增量最小的插入位置"""
         random.shuffle(removed_nodes) # 随机顺序插入
         
         for node in removed_nodes:
@@ -198,42 +216,31 @@ class ALNSOperators:
         """
         Regret-2 插入：
         对于每个未分配节点，计算 (次优插入成本 - 最优插入成本) = Regret 值。
-        优先插入 Regret 值最大的节点（即如果不现在插，以后插代价最大的节点）。
+        优先插入 Regret 值最大的节点。
         """
         remain_nodes = list(removed_nodes)
         
         while remain_nodes:
-            # 计算每个节点的 Regret
             best_regret_node = None
             max_regret_val = -1
             best_insert_move = None # (node, route_idx, insert_pos, cost_inc)
-            
-            # 缓存每个节点的最佳和次佳位置
-            # node -> [(cost, route_idx, pos), ...]
             
             for node in remain_nodes:
                 # 寻找该节点在所有路径的所有可行位置的 Cost
                 candidates = self._find_all_insertion_costs(solution, node)
                 
                 # 补充：开启新车的 Cost
-                # 估算新车 Cost: 2 * dist(Depot, Node)
-                dist_depot = self.fleet_mgr.get_distance(solution.depot, node)
-                new_route_cost = dist_depot * 2 # 近似，忽略装载率对目标函数的影响? 
-                # 实际上应该用 fleet_mgr 创建新路来算 objective。
-                # 简化：假设新车总是可行的，Cost 较大。
-                # 为了统一，我们尝试创建一个只包含该点的新路径
+                # 必须真实计算新车的加权成本
                 new_route = self.fleet_mgr.find_best_vehicle([solution.depot, node, solution.depot])
                 if new_route:
-                    # 这里的 cost 是 Objective 吗？还是距离？
-                    # Greedy 算子通常基于 Objective 增量
-                    # 这里暂用 dist_cost
-                    candidates.append((new_route.dist_cost, -1, 1)) # -1 表示新路径
+                    new_cost = self._calculate_weighted_cost(new_route)
+                    # 增量即为新车的总成本
+                    candidates.append((new_cost, -1, 1)) 
                 
                 # 排序
                 candidates.sort(key=lambda x: x[0])
                 
                 if not candidates:
-                    # 无法插入任何地方（包括新车），这不应该发生
                     continue
                     
                 best_cost = candidates[0][0]
@@ -244,7 +251,6 @@ class ALNSOperators:
                 if regret > max_regret_val:
                     max_regret_val = regret
                     best_regret_node = node
-                    # 记录最佳移动
                     r_idx, pos = candidates[0][1], candidates[0][2]
                     best_insert_move = (r_idx, pos)
             
@@ -264,9 +270,6 @@ class ALNSOperators:
                 
                 remain_nodes.remove(best_regret_node)
             else:
-                # 无法插入？强行开新车或报错
-                # 简单处理：如果无法插入，跳过（这将导致解不可行，但在 ALNS 中通常会接受不可行解并惩罚，或者强行修复）
-                # 这里为了简单，假设总能开新车
                 break
                 
         return solution
@@ -279,21 +282,27 @@ class ALNSOperators:
         
         # 1. 尝试插入现有路径
         for r_idx, route in enumerate(solution.routes):
+            # 一维容量预检 (剪枝)
+            if not self._check_capacity_feasible(route, node):
+                continue
+
             # 约束检查：Bonded Warehouse
             if node.is_bonded:
                 possible_indices = [1] # 必须在 Depot(0) 之后
             else:
                 # 如果现有路径已有 Bonded，只能插在它后面
-                # 假设 Bonded 永远是 index 1
                 start = 2 if (len(route.sequence) > 1 and route.sequence[1].is_bonded) else 1
                 possible_indices = range(start, len(route.sequence))
                 
+            current_weighted_cost = self._calculate_weighted_cost(route)
+            
             for i in possible_indices:
                 new_seq = route.sequence[:i] + [node] + route.sequence[i:]
                 new_route = self.fleet_mgr.find_best_vehicle(new_seq)
                 
                 if new_route:
-                    inc = new_route.dist_cost - route.dist_cost
+                    new_weighted_cost = self._calculate_weighted_cost(new_route)
+                    inc = new_weighted_cost - current_weighted_cost
                     if inc < best_cost_inc:
                         best_cost_inc = inc
                         best_pos = (r_idx, i, new_route)
@@ -301,10 +310,10 @@ class ALNSOperators:
         # 2. 尝试开启新车
         new_route_single = self.fleet_mgr.find_best_vehicle([solution.depot, node, solution.depot])
         if new_route_single:
-            # 比较开启新车的成本 (通常很高) 与 现有最佳插入
-            # 注意：新车的增量是整个新车的 cost
-            if new_route_single.dist_cost < best_cost_inc:
-                best_cost_inc = new_route_single.dist_cost
+            # 新车的增量就是其加权成本
+            new_cost = self._calculate_weighted_cost(new_route_single)
+            if new_cost < best_cost_inc:
+                best_cost_inc = new_cost
                 best_pos = (-1, 1, new_route_single)
         
         # 执行插入
@@ -319,16 +328,45 @@ class ALNSOperators:
         """返回所有可行插入位置的 [(cost_inc, route_idx, pos), ...]"""
         costs = []
         for r_idx, route in enumerate(solution.routes):
+            # 一维容量预检 (剪枝)
+            if not self._check_capacity_feasible(route, node):
+                continue
+
             if node.is_bonded:
                 indices = [1]
             else:
                 start = 2 if (len(route.sequence) > 1 and route.sequence[1].is_bonded) else 1
                 indices = range(start, len(route.sequence))
             
+            current_weighted_cost = self._calculate_weighted_cost(route)
+            
             for i in indices:
                 new_seq = route.sequence[:i] + [node] + route.sequence[i:]
                 new_route = self.fleet_mgr.find_best_vehicle(new_seq)
                 if new_route:
-                    inc = new_route.dist_cost - route.dist_cost
+                    new_weighted_cost = self._calculate_weighted_cost(new_route)
+                    inc = new_weighted_cost - current_weighted_cost
                     costs.append((inc, r_idx, i))
         return costs
+
+    def _check_capacity_feasible(self, route, node):
+        """快速检查一维容量约束 (重量/体积)"""
+        # 假设 route.vehicle 是当前路径使用的车型
+        # 我们需要检查加入 node 后，是否有可能装入最大的车型
+        # 获取车队中最大的载重和体积
+        max_v_type = self.fleet_mgr.vehicle_types[-1] # 假设已按体积排序
+        
+        current_weight = sum(item.weight for n in route.sequence for item in n.items)
+        node_weight = sum(item.weight for item in node.items)
+        
+        if current_weight + node_weight > max_v_type.max_weight:
+            return False
+            
+        # 粗略体积检查 (所有item体积之和 < 车厢体积)
+        current_vol = sum(item.l*item.w*item.h for n in route.sequence for item in n.items)
+        node_vol = sum(item.l*item.w*item.h for item in node.items)
+        
+        if current_vol + node_vol > max_v_type.volume:
+            return False
+            
+        return True
