@@ -1,0 +1,8 @@
+3L-CVRP-Solver/
+├── config.py             # [配置层] 物理参数、算法超参、权重系数
+├── data_model.py         # [数据层] 核心实体定义 (Item, Node, Route) - 含Hash缓存
+├── geometry_kernel.py    # [几何层] 高度图实现、碰撞检测加速
+├── packer_3d.py          # [引擎层] 序列依赖极点装箱法 (SD-EP)
+├── fleet_manager.py      # [资源层] 动态车型选择器
+├── alns_operators.py     # [算法层] 破坏与修复算子 (含保税仓逻辑)
+└── alns_solver.py        # [控制层] ALNS主逻辑 (模拟退火 + 自适应权重)

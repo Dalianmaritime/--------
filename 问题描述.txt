@@ -1,0 +1,49 @@
+Problem description
+Each item is a box characterized by its weight and size.
+Each type of container truck is characterized by a weight capacity and size 
+(i.e., defined by length, width and height).
+Given
+• N pickup points, one starting point (i.e., parking lot), and one delivery point 
+(i.e., port)
+• distance between any two points
+• K types of container trucks (e.g., 20HQ，40GP and 40HQ)
+• a set of items in each pickup point that needs to be transported to the delivery 
+point
+Task
+• given an order, the task is to arrange trucks to transport all items to the 
+delivery point
+Decision Variables
+• n : the number of trucks
+• the type of each truck
+• route of each truck (i.e., the sequence of points visited by each truck)
+• items loaded to each truck at each point
+• packing scheme (i.e., three-dimensional coordinates of items) of each truck
+Objective functions
+• f1=1−∑ni=1loading_ratei/n ,
+where loading_ratei=max(v_ratei,w_ratei) ,
+v_ratei = the total volume of all the items in truck i / the size of the 
+truck i ,
+w_ratei = the total weight of all the items in truck i / the weight 
+capacity of the truck i .
+• f2=∑ni=1truck_distancei
+where truck_distancei is the distance traveled by the truck i .
+Constraints
+This problem includes two types of constraints: vehicle routing and 3-D loading,
+• valid route constraints: each route must start from the starting point and end 
+at the delivery point
+2
+• bonded warehouse constraints: the bonded warehouse is a special pickup 
+point that can only be visited by empty trucks. Hence, if a pickup point is 
+marked as a bonded warehouse, it must be the first of any route that contains 
+it
+• single visit constraints: each truck can only visit each pickup point once
+• none-overlapping constraints: items cannot overlap in any dimension
+• none-splitting constraints: one item can only be loaded in one truck
+• supporting constraints: the item must have sufficient supporting surface, i.e., 
+the supporting area should be greater than 80% of the bottom area of the 
+item
+• weight capacity constraints: the total weight of the cargoes loaded on one 
+truck cannot exceed the weight capacity of the truck
+• size constraints: all the items must be loaded inside the container
+• one-time loading constraints: once a truck leaves a pickup point, the 
+items loaded at the pickup point cannot be moved anymore
