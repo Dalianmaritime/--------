@@ -1,0 +1,39 @@
+==================================================
+       SOLUTION REPORT: E1597112047246
+==================================================
+
+Global Metrics:
+  - Total Vehicles Used:   3
+  - Objective Cost:        672566.89
+  - Total Distance:        644455.00 m
+  - Avg Volume Util:       71.89%
+  - Avg Weight Util:       48.63%
+
+==================================================
+       VEHICLE DETAILS
+==================================================
+
+Vehicle #1 (Type: CT03)
+--------------------------------------------------
+  Route:      start_point -> platform10 -> platform26 -> platform05 -> platform02 -> platform07 -> platform08 -> end_point
+  Distance:   265727.00
+  Load:       106 items
+  Volume:     60.59 m^3 / 71.84 m^3 (84.34%)
+  Weight:     8914.60 kg / 23000.00 kg (38.76%)
+
+Vehicle #2 (Type: CT03)
+--------------------------------------------------
+  Route:      start_point -> platform06 -> platform09 -> platform12 -> end_point
+  Distance:   170812.00
+  Load:       196 items
+  Volume:     48.86 m^3 / 71.84 m^3 (68.02%)
+  Weight:     17153.46 kg / 23000.00 kg (74.58%)
+
+Vehicle #3 (Type: CT03)
+--------------------------------------------------
+  Route:      start_point -> platform03 -> platform04 -> end_point
+  Distance:   207916.00
+  Load:       66 items
+  Volume:     45.48 m^3 / 71.84 m^3 (63.31%)
+  Weight:     7486.64 kg / 23000.00 kg (32.55%)
+

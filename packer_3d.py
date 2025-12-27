@@ -9,8 +9,9 @@ Key Logic:
 - Caching: Caches packing results by route signature to improve performance.
 """
 from config import Config
-from geometry_kernel import HeightMap, check_aabb_collision
+from geometry_kernel import HeightMap, check_aabb_collision, check_aabb_collision_fast
 from data_model import Route, PackedItem
+import numpy as np
 
 class SequenceDependentPacker:
     def __init__(self):
@@ -34,6 +35,14 @@ class SequenceDependentPacker:
         # 极点列表，初始为 (0,0,0)
         extreme_points = [(0, 0, 0)]
         placed_items = []
+        
+        # --- Optimization: Pre-allocate Numpy Matrix for Collision ---
+        # Count total items to allocate sufficient memory
+        total_items_count = sum(len(node.items) for node in route.sequence if node.id != 0)
+        # Shape: (N, 6) -> x1, y1, z1, x2, y2, z2. Use float32 for speed/memory balance.
+        placed_items_matrix = np.zeros((total_items_count, 6), dtype=np.float32)
+        placed_count = 0
+        
         height_map = HeightMap(route.vehicle.L, route.vehicle.W)
         
         # 3. 序列化装箱循环
@@ -59,7 +68,9 @@ class SequenceDependentPacker:
                             continue
                             
                         # B. 碰撞检查 (与 placed_items)
-                        if check_aabb_collision((ep[0], ep[1], ep[2], l, w, h), placed_items):
+                        # 使用向量化检测接口: (matrix, count)
+                        if check_aabb_collision_fast((ep[0], ep[1], ep[2], ep[0]+l, ep[1]+w, ep[2]+h), 
+                                                   (placed_items_matrix, placed_count)):
                             continue
                             
                         # C. 支撑检查 (仅当悬空时)
@@ -81,6 +92,16 @@ class SequenceDependentPacker:
                     ep, l, w, h = best_pos
                     new_packed = PackedItem(item, ep[0], ep[1], ep[2], l, w, h)
                     placed_items.append(new_packed)
+                    
+                    # Update Numpy Matrix
+                    if placed_count < total_items_count:
+                        placed_items_matrix[placed_count] = [ep[0], ep[1], ep[2], ep[0]+l, ep[1]+w, ep[2]+h]
+                        placed_count += 1
+                    else:
+                        # Should not happen if count is correct, but safe fallback (resize)
+                        new_row = np.array([[ep[0], ep[1], ep[2], ep[0]+l, ep[1]+w, ep[2]+h]], dtype=np.float32)
+                        placed_items_matrix = np.vstack((placed_items_matrix, new_row))
+                        placed_count += 1
                     
                     # 更新数据结构
                     height_map.update(ep[0], ep[1], l, w, ep[2] + h)

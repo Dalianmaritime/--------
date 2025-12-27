@@ -40,16 +40,31 @@ def check_overlap(file_path):
             y = float(item.get("y", 0))
             z = float(item.get("z", 0))
             
-            # Determining dimensions
-            # Assume JSON "length" is Y-dim (Long axis), "width" is X-dim (Short axis)
-            # This matches Visualizer behavior where X=Width, Y=Length
+            # Determining dimensions based on main.py export logic:
+            # Main.py: 
+            #   X axis = Width axis
+            #   Y axis = Height axis
+            #   Z axis = Length axis
             
-            # So Dimension X = width
-            # So Dimension Y = length
+            # So:
+            # X-dim = width
+            # Y-dim = height
+            # Z-dim = length
             
-            lx = float(item.get("width", 0))  # X-dim is "width"
-            ly = float(item.get("length", 0)) # Y-dim is "length"
-            lz = float(item.get("height", 0))
+            lx = float(item.get("width", 0))  # X-dim
+            ly = float(item.get("height", 0)) # Y-dim
+            lz = float(item.get("length", 0)) # Z-dim
+            
+            # JSON coordinates are Center-Relative CENTER coordinates.
+            # We need Corner coordinates for AABB check.
+            cx = float(item.get("x", 0))
+            cy = float(item.get("y", 0))
+            cz = float(item.get("z", 0))
+            
+            # Convert Center to Corner (Min)
+            x = cx - lx / 2.0
+            y = cy - ly / 2.0
+            z = cz - lz / 2.0
             
             boxes.append({
                 "id": item.get("spuId", "unknown"),
@@ -90,8 +105,16 @@ def check_overlap(file_path):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        check_overlap(sys.argv[1])
+        import glob
+        input_arg = sys.argv[1]
+        if "*" in input_arg:
+            files = glob.glob(input_arg)
+            for f in files:
+                check_overlap(f)
+        else:
+            check_overlap(input_arg)
     else:
-        files = glob.glob(r"d:\Learning_In_TsingHua\Homework\高级运筹学\【启发式】大作业\result\*_result.json")
+        # Default check
+        files = glob.glob(r"d:\Learning_In_TsingHua\Homework\高级运筹学\【启发式】大作业\result\medium\*_result.json")
         for f in files:
             check_overlap(f)

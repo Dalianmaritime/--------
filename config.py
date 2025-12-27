@@ -21,7 +21,7 @@ class Config:
 
     # --- ALNS 算法参数 ---
     MAX_ITERATIONS = 5000     # 最大迭代
-    MAX_RUNTIME = 3600        # 秒
+    MAX_RUNTIME = 300     # 秒
     SEGMENT_SIZE = 100        # 权重更新周期
     
     # --- 模拟退火 ---

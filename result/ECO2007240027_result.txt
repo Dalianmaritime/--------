@@ -1,0 +1,23 @@
+==================================================
+       SOLUTION REPORT: ECO2007240027
+==================================================
+
+Global Metrics:
+  - Total Vehicles Used:   1
+  - Objective Cost:        262379.00
+  - Total Distance:        221929.00 m
+  - Avg Volume Util:       59.55%
+  - Avg Weight Util:       50.65%
+
+==================================================
+       VEHICLE DETAILS
+==================================================
+
+Vehicle #1 (Type: CT03)
+--------------------------------------------------
+  Route:      start_point -> platform03 -> platform04 -> platform05 -> platform07 -> platform11 -> end_point
+  Distance:   221929.00
+  Load:       70 items
+  Volume:     42.78 m^3 / 71.84 m^3 (59.55%)
+  Weight:     11648.53 kg / 23000.00 kg (50.65%)
+

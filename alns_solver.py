@@ -8,6 +8,7 @@ Key Logic:
 - Updates global best solution and operator scores.
 """
 import numpy as np
+import time
 from config import Config
 
 class ALNSSolver:
@@ -19,8 +20,14 @@ class ALNSSolver:
 
     def solve(self):
         T = Config.START_TEMP
+        start_time = time.time()
         
         for it in range(Config.MAX_ITERATIONS):
+            # Check runtime limit
+            if time.time() - start_time > Config.MAX_RUNTIME:
+                print(f"Time limit reached ({Config.MAX_RUNTIME}s). Stopping at iteration {it}.")
+                break
+
             # 1. 轮盘赌选择算子
             repair_op = self._roulette_select(self.ops.repair_ops, self.scores)
             destroy_op = self._roulette_select(self.ops.destroy_ops)
