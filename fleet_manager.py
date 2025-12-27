@@ -1,3 +1,12 @@
+"""
+Fleet & Route Management
+------------------------
+Purpose: Manages vehicle selection and route cost evaluation.
+Key Logic:
+- find_best_vehicle: Iterates through available vehicle types to find the smallest one that fits (3D packing).
+- Calculates distance cost using the global Distance Matrix.
+- Integrates with 3D Packer for feasibility checks.
+"""
 from data_model import Route
 from packer_3d import SequenceDependentPacker
 import math

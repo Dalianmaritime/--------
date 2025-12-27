@@ -1,3 +1,12 @@
+"""
+Heuristic Operators
+-------------------
+Purpose: Implements specific Destroy (Removal) and Repair (Insertion) operators.
+Key Operators:
+- Destroy: Random, Worst (High Cost), Shaw (Relatedness).
+- Repair: Greedy (Best Fit), Regret-2 (Look-ahead).
+- Helper: _rebuild_solution (Ensures Start->End topology).
+"""
 import random
 import math
 from copy import deepcopy

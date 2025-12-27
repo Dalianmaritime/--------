@@ -1,115 +1,154 @@
 {
-    "instance_file": "ECO2008220028.txt",
-    "total_cost": 718210.3535723878,
-    "total_routes": 1,
-    "duration_seconds": 411.1736960411072,
-    "routes": [
-        {
-            "route_id": 1,
-            "vehicle_type": "CT03",
-            "sequence_node_ids": [
-                0,
-                9,
-                10,
-                0
-            ],
-            "load_rate_volume": 0.4583076464276121,
-            "distance": 176518.0,
-            "items_count": 10,
-            "has_bonded_node": false,
-            "bonded_constraint_check": "N/A",
-            "packed_items": [
-                {
-                    "item_id": "942681801028456",
-                    "x": 0,
-                    "y": 0,
-                    "z": 0,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028455",
-                    "x": 0,
-                    "y": 0,
-                    "z": 1140,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028454",
-                    "x": 2980,
-                    "y": 0,
-                    "z": 0,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028460",
-                    "x": 2980,
-                    "y": 0,
-                    "z": 1140,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028459",
-                    "x": 5960,
-                    "y": 0,
-                    "z": 0,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028458",
-                    "x": 5960,
-                    "y": 0,
-                    "z": 1140,
-                    "lx": 2980,
-                    "ly": 1250,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028457",
-                    "x": 0,
-                    "y": 1250,
-                    "z": 0,
-                    "lx": 2980,
-                    "ly": 985,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801028461",
-                    "x": 0,
-                    "y": 1250,
-                    "z": 1140,
-                    "lx": 2980,
-                    "ly": 985,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "942681801027100",
-                    "x": 2980,
-                    "y": 1250,
-                    "z": 0,
-                    "lx": 560,
-                    "ly": 820,
-                    "lz": 820
-                },
-                {
-                    "item_id": "942681801027122",
-                    "x": 2980,
-                    "y": 1250,
-                    "z": 820,
-                    "lx": 560,
-                    "ly": 820,
-                    "lz": 820
-                }
-            ]
-        }
+    "estimateCode": "ECO2008220028",
+    "solutionArray": [
+        [
+            {
+                "truckTypeId": "42001",
+                "truckTypeCode": "CT03",
+                "piece": 10,
+                "volume": 71839456000.0,
+                "weight": 4709.8,
+                "innerLength": 11920.0,
+                "innerWidth": 2318.0,
+                "innerHeight": 2600.0,
+                "maxLoadWeight": 23000.0,
+                "platformArray": [
+                    "platform23",
+                    "platform05"
+                ],
+                "spuArray": [
+                    {
+                        "spuId": "942681801028456",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "order": 1,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028455",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 1140.0,
+                        "order": 2,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028454",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 2980.0,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "order": 3,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028460",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 2980.0,
+                        "y": 0.0,
+                        "z": 1140.0,
+                        "order": 4,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028459",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 5960.0,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "order": 5,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028458",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 5960.0,
+                        "y": 0.0,
+                        "z": 1140.0,
+                        "order": 6,
+                        "length": 1250.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 589.5
+                    },
+                    {
+                        "spuId": "942681801028457",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 1250.0,
+                        "z": 0.0,
+                        "order": 7,
+                        "length": 985.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 463.5
+                    },
+                    {
+                        "spuId": "942681801028461",
+                        "platformCode": "platform23",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 1250.0,
+                        "z": 1140.0,
+                        "order": 8,
+                        "length": 985.0,
+                        "width": 2980.0,
+                        "height": 1140.0,
+                        "weight": 463.5
+                    },
+                    {
+                        "spuId": "942681801027100",
+                        "platformCode": "platform05",
+                        "direction": 100,
+                        "x": 2980.0,
+                        "y": 1250.0,
+                        "z": 0.0,
+                        "order": 9,
+                        "length": 820.0,
+                        "width": 560.0,
+                        "height": 820.0,
+                        "weight": 122.6
+                    },
+                    {
+                        "spuId": "942681801027122",
+                        "platformCode": "platform05",
+                        "direction": 100,
+                        "x": 2980.0,
+                        "y": 1250.0,
+                        "z": 820.0,
+                        "order": 10,
+                        "length": 820.0,
+                        "width": 560.0,
+                        "height": 820.0,
+                        "weight": 123.2
+                    }
+                ]
+            }
+        ]
     ]
 }

@@ -1,133 +1,180 @@
 {
-    "instance_file": "EF1595650233198.txt",
-    "total_cost": 224611.0,
-    "total_routes": 1,
-    "duration_seconds": 62.48964834213257,
-    "routes": [
-        {
-            "route_id": 1,
-            "vehicle_type": "R110",
-            "sequence_node_ids": [
-                0,
-                1,
-                6,
-                0
-            ],
-            "load_rate_volume": 0.2935041684505205,
-            "distance": 224611.0,
-            "items_count": 12,
-            "has_bonded_node": false,
-            "bonded_constraint_check": "N/A",
-            "packed_items": [
-                {
-                    "item_id": "9843811040002_00J69207027081305253_0",
-                    "x": 0,
-                    "y": 0,
-                    "z": 0,
-                    "lx": 2850,
-                    "ly": 430,
-                    "lz": 1140
-                },
-                {
-                    "item_id": "9843811040002_00J69207027081305262_0",
-                    "x": 0,
-                    "y": 430,
-                    "z": 0,
-                    "lx": 2770,
-                    "ly": 275,
-                    "lz": 530
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-1_0",
-                    "x": 0,
-                    "y": 705,
-                    "z": 0,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_6",
-                    "x": 0,
-                    "y": 705,
-                    "z": 800,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_5",
-                    "x": 860,
-                    "y": 705,
-                    "z": 0,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_4",
-                    "x": 860,
-                    "y": 705,
-                    "z": 800,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_3",
-                    "x": 1720,
-                    "y": 705,
-                    "z": 0,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_2",
-                    "x": 1720,
-                    "y": 705,
-                    "z": 800,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_1",
-                    "x": 2580,
-                    "y": 705,
-                    "z": 0,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_7240101D084-2_0",
-                    "x": 2580,
-                    "y": 705,
-                    "z": 800,
-                    "lx": 860,
-                    "ly": 1200,
-                    "lz": 800
-                },
-                {
-                    "item_id": "9850175460002_00I69207027400521780-3_0",
-                    "x": 0,
-                    "y": 705,
-                    "z": 1600,
-                    "lx": 1200,
-                    "ly": 800,
-                    "lz": 660
-                },
-                {
-                    "item_id": "9850175460002_7240191M402-4_0",
-                    "x": 0,
-                    "y": 1905,
-                    "z": 0,
-                    "lx": 580,
-                    "ly": 170,
-                    "lz": 580
-                }
-            ]
-        }
+    "estimateCode": "EF1595650233198",
+    "solutionArray": [
+        [
+            {
+                "truckTypeId": "40001",
+                "truckTypeCode": "R110",
+                "piece": 12,
+                "volume": 30992355400.0,
+                "weight": 1506.76,
+                "innerLength": 5890.0,
+                "innerWidth": 2318.0,
+                "innerHeight": 2270.0,
+                "maxLoadWeight": 18000.0,
+                "platformArray": [
+                    "platform32",
+                    "platform45"
+                ],
+                "spuArray": [
+                    {
+                        "spuId": "9843811040002_00J69207027081305253_0",
+                        "platformCode": "platform32",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "order": 1,
+                        "length": 430.0,
+                        "width": 2850.0,
+                        "height": 1140.0,
+                        "weight": 173.5
+                    },
+                    {
+                        "spuId": "9843811040002_00J69207027081305262_0",
+                        "platformCode": "platform32",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 430.0,
+                        "z": 0.0,
+                        "order": 2,
+                        "length": 275.0,
+                        "width": 2770.0,
+                        "height": 530.0,
+                        "weight": 54.5
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-1_0",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 705.0,
+                        "z": 0.0,
+                        "order": 3,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_6",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 705.0,
+                        "z": 800.0,
+                        "order": 4,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_5",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 860.0,
+                        "y": 705.0,
+                        "z": 0.0,
+                        "order": 5,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_4",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 860.0,
+                        "y": 705.0,
+                        "z": 800.0,
+                        "order": 6,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_3",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 1720.0,
+                        "y": 705.0,
+                        "z": 0.0,
+                        "order": 7,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_2",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 1720.0,
+                        "y": 705.0,
+                        "z": 800.0,
+                        "order": 8,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_1",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 2580.0,
+                        "y": 705.0,
+                        "z": 0.0,
+                        "order": 9,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240101D084-2_0",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 2580.0,
+                        "y": 705.0,
+                        "z": 800.0,
+                        "order": 10,
+                        "length": 1200.0,
+                        "width": 860.0,
+                        "height": 800.0,
+                        "weight": 151.0
+                    },
+                    {
+                        "spuId": "9850175460002_00I69207027400521780-3_0",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 705.0,
+                        "z": 1600.0,
+                        "order": 11,
+                        "length": 800.0,
+                        "width": 1200.0,
+                        "height": 660.0,
+                        "weight": 62.0
+                    },
+                    {
+                        "spuId": "9850175460002_7240191M402-4_0",
+                        "platformCode": "platform45",
+                        "direction": 100,
+                        "x": 0.0,
+                        "y": 1905.0,
+                        "z": 0.0,
+                        "order": 12,
+                        "length": 170.0,
+                        "width": 580.0,
+                        "height": 580.0,
+                        "weight": 8.76
+                    }
+                ]
+            }
+        ]
     ]
 }

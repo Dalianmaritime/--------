@@ -1,3 +1,13 @@
+"""
+Data Loading & Parsing
+----------------------
+Purpose: Parses JSON-formatted problem instances into internal data structures.
+Key Logic:
+- Maps 'start_point' to Node ID 0.
+- Maps 'end_point' to Node ID N+1 (Ensuring open-loop topology).
+- Parses Vehicle Types and Dimensions.
+- Constructs Distance Matrix (N+2 x N+2).
+"""
 import json
 import numpy as np
 from typing import List, Tuple, Dict
@@ -12,6 +22,7 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
     for t_dto in data['algorithmBaseParamDto']['truckTypeDtoList']:
         v = VehicleType(
             type_id=t_dto['truckTypeCode'], # Use Code as ID (e.g., CT10)
+            real_id=t_dto['truckTypeId'], # Added real ID
             L=int(t_dto['length']),
             W=int(t_dto['width']),
             H=int(t_dto['height']),
@@ -42,7 +53,7 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
     nodes: List[Node] = []
     
     # 1. Create Start Node (ID=0)
-    start_node = Node(id=0, is_bonded=False, x=0, y=0)
+    start_node = Node(id=0, is_bonded=False, x=0, y=0, platform_code="start_point")
     nodes.append(start_node)
     
     # 2. Create Customer Nodes
@@ -54,7 +65,7 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
         p_code = p_dto['platformCode']
         is_bonded = p_dto.get('mustFirst', False)
         
-        node = Node(id=current_idx, is_bonded=is_bonded, x=0, y=0)
+        node = Node(id=current_idx, is_bonded=is_bonded, x=0, y=0, platform_code=p_code)
         
         # Attach items
         if p_code in items_by_platform:
@@ -66,7 +77,7 @@ def load_problem(file_path: str) -> Tuple[List[Node], List[VehicleType], np.ndar
         
     # 3. Create End Node (ID=N+1)
     end_node_idx = current_idx
-    end_node = Node(id=end_node_idx, is_bonded=False, x=0, y=0)
+    end_node = Node(id=end_node_idx, is_bonded=False, x=0, y=0, platform_code="end_point")
     nodes.append(end_node)
     node_map['end_point'] = end_node_idx
         

@@ -1,11 +1,20 @@
+"""
+Global Configuration
+--------------------
+Purpose: Centralizes all tunable parameters for the algorithm and physical constraints.
+Key Parameters:
+- Physical: Support ratio (0.8), Grid precision (50mm).
+- Objective: Alpha (Load Rate Weight), Beta (Distance Weight).
+- ALNS: Iterations, Cooling Rate, Destroy/Repair operators weights.
+"""
 class Config:
     # --- 物理约束 ---
-    SUPPORT_RATIO = 0.8       # 支撑面积阈值 (约束 2-47)
-    GRID_PRECISION = 50       # 高度图网格精度 (mm), 越小越准但内存越大
+    SUPPORT_RATIO = 1.0       # 支撑面积阈值 (严格要求 100% 支撑，消除悬空)
+    GRID_PRECISION = 1        # 高度图网格精度 (mm), 降低精度值以消除浮空误差
     
     # --- 目标函数 (归一化权重) ---
-    # f1(装载率) 是 0-1, f2(距离) 是 1000+, 需要 Alpha 放大 f1
-    ALPHA = 1000000.0         # 装载率权重 (大幅提升以匹配距离量纲)
+   
+    ALPHA = 100000.0         # 装载率权重 (大幅提升以匹配距离量纲)
     BETA = 1.0                # 距离权重
     LAMBDA_W = 0.5            # 质量装载率权重
     LAMBDA_V = 0.5            # 体积装载率权重

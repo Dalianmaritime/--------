@@ -1,3 +1,12 @@
+"""
+ALNS Main Solver
+----------------
+Purpose: Implements the Adaptive Large Neighborhood Search (ALNS) metaheuristic.
+Key Logic:
+- Manages the Simulated Annealing (SA) cooling schedule.
+- Selects Destroy/Repair operators based on adaptive weights.
+- Updates global best solution and operator scores.
+"""
 import numpy as np
 from config import Config
 

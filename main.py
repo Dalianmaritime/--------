@@ -1,3 +1,14 @@
+"""
+Main Entry Point
+----------------
+Purpose: Orchestrates the loading, solving, and result saving process for the 3L-CVRP.
+Key Features:
+- Batch processing of data files.
+- Integration of Data Loader, ALNS Solver, and Result Export.
+- Open-loop routing (Start -> End) validation.
+
+Usage: python main.py <Data_Directory>
+"""
 import argparse
 import time
 import os
@@ -19,6 +30,13 @@ def solve_single_instance(file_path: str, result_dir: str):
     # nodes: [Start, Customer1, ..., CustomerN, End]
     print(f"Loaded {len(nodes)-2} customers and {len(v_types)} vehicle types.")
     
+    # Build Item ID to Platform Code Map
+    item_to_platform = {}
+    for node in nodes:
+        if node.platform_code and node.items:
+            for item in node.items:
+                item_to_platform[item.id] = node.platform_code
+
     # Initialize Components
     fleet_mgr = FleetManager(v_types, dist_mtx)
     ops = ALNSOperators(fleet_mgr)
@@ -44,52 +62,98 @@ def solve_single_instance(file_path: str, result_dir: str):
     print(f"Final Cost: {best_sol.total_cost:.2f}, Routes: {len(best_sol.routes)}")
 
     # Prepare Result Data
-    result_data = {
-        "instance_file": os.path.basename(file_path),
-        "total_cost": best_sol.total_cost,
-        "total_routes": len(best_sol.routes),
-        "duration_seconds": duration,
-        "routes": []
-    }
+    estimate_code = os.path.splitext(os.path.basename(file_path))[0]
+    
+    solution_routes = []
+    
+    for r in best_sol.routes:
+        # Calculate total weight
+        packed_weight = sum(pi.item.weight for pi in r.packed_items)
+        
+        # Collect platform codes (excluding start/end)
+        platform_codes = []
+        seen_platforms = set()
+        for node in r.sequence:
+            # Skip Start (id=0) and End (last node)
+            # Note: node.id checks are safer than index if sequence includes them
+            if node.platform_code and node.platform_code not in ["start_point", "end_point"]:
+                 if node.platform_code not in seen_platforms:
+                     platform_codes.append(node.platform_code)
+                     seen_platforms.add(node.platform_code)
 
-    for i, r in enumerate(best_sol.routes):
-        # Determine bonded status check
-        is_bonded_route = any(n.is_bonded for n in r.sequence)
-        bonded_check = "N/A"
-        if is_bonded_route:
-            first_customer = r.sequence[1]
-            bonded_check = "PASS" if first_customer.is_bonded else "FAIL"
+        spu_array = []
+        for idx, pi in enumerate(r.packed_items):
+            # SWAP Output Coordinates to match Visualizer
+            # Visualizer expects X=Width, Y=Length (based on screenshot overflow)
+            # Internal: X=Length, Y=Width (Standard)
+            # Output Mapping:
+            # out_x = Width Position (pi.y)
+            # out_y = Length Position (pi.x)
+            # length = Length Dimension (pi.lx)
+            # width = Width Dimension (pi.ly)
+            
+            out_x = float(pi.y)
+            out_y = float(pi.x)
+            # FIX: If we swap X and Y axes, we MUST swap the dimensions too.
+            # out_x corresponds to Internal Y axis. So dimension along out_x is pi.ly.
+            # out_y corresponds to Internal X axis. So dimension along out_y is pi.lx.
+            # JSON "length" usually maps to dimension along Y (Long Axis)
+            # JSON "width" usually maps to dimension along X (Short Axis)
+            # If Visualizer X = Width, Y = Length.
+            # Then "width" key -> X-dim -> should be pi.ly
+            # Then "length" key -> Y-dim -> should be pi.lx
+            
+            out_lx = float(pi.lx) # Dimension along Internal X (Length) -> Mapped to Output Y (Length)
+            out_ly = float(pi.ly) # Dimension along Internal Y (Width) -> Mapped to Output X (Width)
+            
+            spu_array.append({
+                "spuId": pi.item.id,
+                "platformCode": item_to_platform.get(pi.item.id, ""),
+                "direction": 100,
+                "x": out_x,
+                "y": out_y,
+                "z": float(pi.z),
+                "order": idx + 1,
+                "length": out_lx, # Map Internal Length (lx) to Output "length" (Y-dim)
+                "width": out_ly,  # Map Internal Width (ly) to Output "width" (X-dim)
+                "height": float(pi.lz),
+                "weight": float(pi.item.weight)
+            })
 
-        route_info = {
-            "route_id": i + 1,
-            "vehicle_type": r.vehicle.type_id,
-            "sequence_node_ids": [n.id for n in r.sequence],
-            "load_rate_volume": r.load_rate,
-            "distance": r.dist_cost,
-            "items_count": len(r.packed_items),
-            "has_bonded_node": is_bonded_route,
-            "bonded_constraint_check": bonded_check,
-            "packed_items": [
-                {
-                    "item_id": pi.item.id,
-                    "x": pi.x, "y": pi.y, "z": pi.z,
-                    "lx": pi.lx, "ly": pi.ly, "lz": pi.lz
-                } for pi in r.packed_items
-            ]
+        vehicle_info = {
+            "truckTypeId": getattr(r.vehicle, 'real_id', r.vehicle.type_id), # Fallback if real_id missing
+            "truckTypeCode": r.vehicle.type_id,
+            "piece": len(r.packed_items),
+            "volume": float(r.vehicle.volume),
+            "weight": float(packed_weight),
+            "innerLength": float(r.vehicle.L),
+            "innerWidth": float(r.vehicle.W),
+            "innerHeight": float(r.vehicle.H),
+            "maxLoadWeight": float(r.vehicle.max_weight),
+            "platformArray": platform_codes,
+            "spuArray": spu_array
         }
-        result_data["routes"].append(route_info)
+        solution_routes.append(vehicle_info)
+
+    result_data = {
+        "estimateCode": estimate_code,
+        "solutionArray": [solution_routes]
+    }
 
     # Save Result
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
         
-    output_filename = os.path.basename(file_path).replace('.txt', '_result.json')
+    output_filename = f"{estimate_code}_result.json"
     output_path = os.path.join(result_dir, output_filename)
     
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(result_data, f, indent=4, ensure_ascii=False)
     
-    print(f"Result saved to: {output_path}")
+    print(f"Result saved to {output_path}")
+
+def unused_code_block():
+    pass
 
 def main():
     parser = argparse.ArgumentParser(description="3L-CVRP Batch Solver")

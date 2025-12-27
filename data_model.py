@@ -1,3 +1,14 @@
+"""
+Data Models
+-----------
+Purpose: Defines the core data structures for the problem.
+Key Classes:
+- Node: Represents a pickup point (or start/end).
+- Item: Represents a 3D box with 6 orientation permutations.
+- VehicleType: Defines truck dimensions and capacity.
+- Route: A sequence of nodes assigned to a vehicle.
+- Solution: The complete set of routes, including Start/End nodes.
+"""
 from dataclasses import dataclass, field
 from typing import List, Tuple
 import hashlib
@@ -28,11 +39,13 @@ class Node:
     is_bonded: bool   # 保税仓硬约束
     x: float
     y: float
+    platform_code: str = "" # Added platform code
     items: List[Item] = field(default_factory=list)
 
 @dataclass
 class VehicleType:
-    type_id: str
+    type_id: str # This is actually truckTypeCode (e.g. CT10)
+    real_id: str # This is truckTypeId (e.g. 41001)
     L: int
     W: int
     H: int

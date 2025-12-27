@@ -1,3 +1,13 @@
+"""
+3D Bin Packing
+--------------
+Purpose: Implements the 3D packing heuristic (Sequence Dependent).
+Key Logic:
+- Sequence Dependent: Packs items strictly in the order of node visitation.
+- Corner Point Heuristic: Places items at the best available corner (min X, min Z).
+- Constraints: Checks boundaries, collisions, and support surface (80%).
+- Caching: Caches packing results by route signature to improve performance.
+"""
 from config import Config
 from geometry_kernel import HeightMap, check_aabb_collision
 from data_model import Route, PackedItem
@@ -104,12 +114,25 @@ class SequenceDependentPacker:
             (x, y, z + h)
         ]
         
+        # 引入 Epsilon 避免浮点误差导致的误删
+        EPS = 1e-4
+
         # 移除失效点
         for ep in eps:
             # 如果 ep 在新盒子内部或边界上，则移除
-            if not (ep[0] >= x and ep[0] < x+l and 
-                    ep[1] >= y and ep[1] < y+w and 
-                    ep[2] >= z and ep[2] < z+h):
+            # 使用 EPS 收缩盒子范围，确保只有严格在内部(或边界)的点被移除
+            # 逻辑：如果点在 Box 范围内，则移除。
+            # Box range: [x, x+l], [y, y+w], [z, z+h]
+            # 为了防止数值误差导致本来在表面的点被误判为内部，
+            # 我们应该让 Box 稍微 "小" 一点点？
+            # 不，如果是为了移除“被覆盖”的点。
+            # 如果点在 (x, y, z)，新盒子在 (x, y, z) 放下。点被覆盖。
+            # 判断条件: ep >= x AND ep < x+l.
+            # 加上 EPS: ep >= x - EPS AND ep < x + l - EPS ?
+            # 稳健做法：
+            if not (ep[0] >= x - EPS and ep[0] < x + l - EPS and 
+                    ep[1] >= y - EPS and ep[1] < y + w - EPS and 
+                    ep[2] >= z - EPS and ep[2] < z + h - EPS):
                 new_eps.append(ep)
         
         # 添加新点 (需过滤掉超出车厢的点)
