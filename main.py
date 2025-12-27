@@ -83,40 +83,72 @@ def solve_single_instance(file_path: str, result_dir: str):
 
         spu_array = []
         for idx, pi in enumerate(r.packed_items):
-            # SWAP Output Coordinates to match Visualizer
-            # Visualizer expects X=Width, Y=Length (based on screenshot overflow)
-            # Internal: X=Length, Y=Width (Standard)
-            # Output Mapping:
-            # out_x = Width Position (pi.y)
-            # out_y = Length Position (pi.x)
-            # length = Length Dimension (pi.lx)
-            # width = Width Dimension (pi.ly)
+            # --- Coordinate Transformation (Corner to Center-Relative) ---
+            # Internal: x=Length, y=Width, z=Height (Corner based)
+            # Output Target: 
+            #   x axis = Width axis
+            #   y axis = Height axis
+            #   z axis = Length axis
+            #   Origin = Vehicle Center
             
-            out_x = float(pi.y)
-            out_y = float(pi.x)
-            # FIX: If we swap X and Y axes, we MUST swap the dimensions too.
-            # out_x corresponds to Internal Y axis. So dimension along out_x is pi.ly.
-            # out_y corresponds to Internal X axis. So dimension along out_y is pi.lx.
-            # JSON "length" usually maps to dimension along Y (Long Axis)
-            # JSON "width" usually maps to dimension along X (Short Axis)
-            # If Visualizer X = Width, Y = Length.
-            # Then "width" key -> X-dim -> should be pi.ly
-            # Then "length" key -> Y-dim -> should be pi.lx
+            v_L, v_W, v_H = r.vehicle.L, r.vehicle.W, r.vehicle.H
             
-            out_lx = float(pi.lx) # Dimension along Internal X (Length) -> Mapped to Output Y (Length)
-            out_ly = float(pi.ly) # Dimension along Internal Y (Width) -> Mapped to Output X (Width)
+            # 1. Calculate Center of the Item in Internal Coordinates
+            center_internal_x = pi.x + pi.lx / 2.0
+            center_internal_y = pi.y + pi.ly / 2.0
+            center_internal_z = pi.z + pi.lz / 2.0
             
+            # 2. Shift Origin to Vehicle Center (Internal Coords)
+            #    Internal Center is at (L/2, W/2, H/2)
+            shift_x = center_internal_x - v_L / 2.0
+            shift_y = center_internal_y - v_W / 2.0
+            shift_z = center_internal_z - v_H / 2.0
+            
+            # 3. Map to Output Axes
+            #    Out Z = Internal X (Length)
+            #    Out X = Internal Y (Width)
+            #    Out Y = Internal Z (Height)
+            out_z = shift_x
+            out_x = shift_y
+            out_y = shift_z
+            
+            # --- Direction Mapping ---
+            # 100: l, w, h (Standard)
+            # 200: w, l, h (Rotated 90 deg around Z)
+            # We compare packed dims (lx, ly, lz) with original item dims (l, w, h)
+            direction = 100
+            orig = pi.item
+            
+            # Floating point tolerance for comparison
+            EPS = 1e-4
+            
+            if abs(pi.lx - orig.l) < EPS and abs(pi.ly - orig.w) < EPS:
+                direction = 100
+            elif abs(pi.lx - orig.w) < EPS and abs(pi.ly - orig.l) < EPS:
+                direction = 200
+            elif abs(pi.lx - orig.l) < EPS and abs(pi.ly - orig.h) < EPS:
+                 direction = 300 # L, H, W (Tipped on side)
+            elif abs(pi.lx - orig.h) < EPS and abs(pi.ly - orig.l) < EPS:
+                 direction = 400 # H, L, W
+            elif abs(pi.lx - orig.w) < EPS and abs(pi.ly - orig.h) < EPS:
+                 direction = 500 # W, H, L
+            elif abs(pi.lx - orig.h) < EPS and abs(pi.ly - orig.w) < EPS:
+                 direction = 600 # H, W, L
+            else:
+                 # Fallback/Default
+                 direction = 100
+
             spu_array.append({
                 "spuId": pi.item.id,
                 "platformCode": item_to_platform.get(pi.item.id, ""),
-                "direction": 100,
-                "x": out_x,
-                "y": out_y,
-                "z": float(pi.z),
+                "direction": direction,
+                "x": float(out_x),
+                "y": float(out_y),
+                "z": float(out_z),
                 "order": idx + 1,
-                "length": out_lx, # Map Internal Length (lx) to Output "length" (Y-dim)
-                "width": out_ly,  # Map Internal Width (ly) to Output "width" (X-dim)
-                "height": float(pi.lz),
+                "length": float(pi.lx), # Dimension along Internal X (Output Z)
+                "width": float(pi.ly),  # Dimension along Internal Y (Output X)
+                "height": float(pi.lz), # Dimension along Internal Z (Output Y)
                 "weight": float(pi.item.weight)
             })
 
@@ -124,7 +156,7 @@ def solve_single_instance(file_path: str, result_dir: str):
             "truckTypeId": getattr(r.vehicle, 'real_id', r.vehicle.type_id), # Fallback if real_id missing
             "truckTypeCode": r.vehicle.type_id,
             "piece": len(r.packed_items),
-            "volume": float(r.vehicle.volume),
+            "volume": float(sum(pi.item.l * pi.item.w * pi.item.h for pi in r.packed_items)), # Sum of ITEM volumes
             "weight": float(packed_weight),
             "innerLength": float(r.vehicle.L),
             "innerWidth": float(r.vehicle.W),
@@ -137,7 +169,7 @@ def solve_single_instance(file_path: str, result_dir: str):
 
     result_data = {
         "estimateCode": estimate_code,
-        "solutionArray": [solution_routes]
+        "solutionArray": [solution_routes] # Nested list as required [[...]]
     }
 
     # Save Result
@@ -151,6 +183,64 @@ def solve_single_instance(file_path: str, result_dir: str):
         json.dump(result_data, f, indent=4, ensure_ascii=False)
     
     print(f"Result saved to {output_path}")
+
+    # Save Text Report
+    txt_filename = f"{estimate_code}_result.txt"
+    txt_path = os.path.join(result_dir, txt_filename)
+    save_text_report(txt_path, estimate_code, best_sol)
+    print(f"Report saved to {txt_path}")
+
+def save_text_report(filepath: str, estimate_code: str, solution: Solution):
+    """Generates a detailed text report of the solution."""
+    with open(filepath, 'w', encoding='utf-8') as f:
+        # 1. Global Summary
+        total_dist = sum(r.dist_cost for r in solution.routes)
+        total_vol_util = 0.0
+        total_weight_util = 0.0
+        
+        if solution.routes:
+            total_vol_util = sum(r.load_rate for r in solution.routes) / len(solution.routes)
+            # Approximate weight util (avg of routes)
+            w_utils = []
+            for r in solution.routes:
+                loaded_w = sum(pi.item.weight for pi in r.packed_items)
+                w_utils.append(loaded_w / r.vehicle.max_weight if r.vehicle.max_weight > 0 else 0)
+            total_weight_util = sum(w_utils) / len(w_utils)
+
+        f.write(f"==================================================\n")
+        f.write(f"       SOLUTION REPORT: {estimate_code}\n")
+        f.write(f"==================================================\n\n")
+        
+        f.write(f"Global Metrics:\n")
+        f.write(f"  - Total Vehicles Used:   {len(solution.routes)}\n")
+        f.write(f"  - Objective Cost:        {solution.total_cost:.2f}\n")
+        f.write(f"  - Total Distance:        {total_dist:.2f} m\n")
+        f.write(f"  - Avg Volume Util:       {total_vol_util*100:.2f}%\n")
+        f.write(f"  - Avg Weight Util:       {total_weight_util*100:.2f}%\n\n")
+        
+        f.write(f"==================================================\n")
+        f.write(f"       VEHICLE DETAILS\n")
+        f.write(f"==================================================\n\n")
+        
+        for idx, r in enumerate(solution.routes):
+            # Metrics
+            loaded_vol = sum(pi.item.l * pi.item.w * pi.item.h for pi in r.packed_items)
+            loaded_weight = sum(pi.item.weight for pi in r.packed_items)
+            vol_util = (loaded_vol / r.vehicle.volume) * 100
+            weight_util = (loaded_weight / r.vehicle.max_weight) * 100
+            
+            # Route Sequence
+            # Filter out repeated start/end points for cleaner view
+            seq_str = " -> ".join([n.platform_code for n in r.sequence if n.platform_code])
+            
+            f.write(f"Vehicle #{idx + 1} (Type: {r.vehicle.type_id})\n")
+            f.write(f"--------------------------------------------------\n")
+            f.write(f"  Route:      {seq_str}\n")
+            f.write(f"  Distance:   {r.dist_cost:.2f}\n")
+            f.write(f"  Load:       {len(r.packed_items)} items\n")
+            f.write(f"  Volume:     {loaded_vol/1e9:.2f} m^3 / {r.vehicle.volume/1e9:.2f} m^3 ({vol_util:.2f}%)\n")
+            f.write(f"  Weight:     {loaded_weight:.2f} kg / {r.vehicle.max_weight:.2f} kg ({weight_util:.2f}%)\n")
+            f.write(f"\n")
 
 def unused_code_block():
     pass

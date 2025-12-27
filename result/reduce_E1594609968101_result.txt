@@ -1,0 +1,23 @@
+==================================================
+       SOLUTION REPORT: reduce_E1594609968101
+==================================================
+
+Global Metrics:
+  - Total Vehicles Used:   1
+  - Objective Cost:        306700.19
+  - Total Distance:        243502.00 m
+  - Avg Volume Util:       36.80%
+  - Avg Weight Util:       18.07%
+
+==================================================
+       VEHICLE DETAILS
+==================================================
+
+Vehicle #1 (Type: CT10)
+--------------------------------------------------
+  Route:      start_point -> platform02 -> platform04 -> platform09 -> platform11 -> platform10 -> end_point
+  Distance:   243502.00
+  Load:       30 items
+  Volume:     23.08 m^3 / 62.72 m^3 (36.80%)
+  Weight:     4156.53 kg / 23000.00 kg (18.07%)
+

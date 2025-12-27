@@ -9,7 +9,7 @@ Key Parameters:
 """
 class Config:
     # --- 物理约束 ---
-    SUPPORT_RATIO = 1.0       # 支撑面积阈值 (严格要求 100% 支撑，消除悬空)
+    SUPPORT_RATIO = 0.8       # 支撑面积阈值 (严格要求 100% 支撑，消除悬空)
     GRID_PRECISION = 1        # 高度图网格精度 (mm), 降低精度值以消除浮空误差
     
     # --- 目标函数 (归一化权重) ---

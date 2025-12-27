@@ -3,7 +3,7 @@ import os
 from main import solve_single_instance
 
 def run_specific():
-    file_path = r"d:\Learning_In_TsingHua\Homework\高级运筹学\【启发式】大作业\Data\small\ECO2008120038.txt"
+    file_path = r"d:\Learning_In_TsingHua\Homework\高级运筹学\【启发式】大作业\Data\reduce_E1594609968101.txt"
     result_dir = r"d:\Learning_In_TsingHua\Homework\高级运筹学\【启发式】大作业\result"
     
     if not os.path.exists(file_path):
